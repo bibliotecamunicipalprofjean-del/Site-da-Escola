@@ -16,6 +16,7 @@ export const AboutLibraryModal: React.FC<AboutLibraryModalProps> = ({
   creatorPhoto
 }) => {
   const [imgSrc, setImgSrc] = React.useState(() => creatorPhoto || getCreatorPhoto());
+  const [hasImgError, setHasImgError] = React.useState(false);
 
   React.useEffect(() => {
     if (creatorPhoto) {
@@ -23,11 +24,13 @@ export const AboutLibraryModal: React.FC<AboutLibraryModalProps> = ({
     } else {
       setImgSrc(getCreatorPhoto());
     }
+    setHasImgError(false);
   }, [creatorPhoto]);
 
   React.useEffect(() => {
     const unsubscribe = subscribeCreatorPhoto((newUrl) => {
       setImgSrc(newUrl);
+      setHasImgError(false);
     });
     return unsubscribe;
   }, []);
@@ -88,14 +91,18 @@ export const AboutLibraryModal: React.FC<AboutLibraryModalProps> = ({
 
           {/* Creator Profile Card */}
           <div className="p-4 bg-gradient-to-r from-amber-50 to-stone-50 rounded-xl border border-amber-200/90 flex flex-col sm:flex-row items-start sm:items-center gap-3.5 shadow-2xs">
-            <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0 bg-stone-800 shadow-xs">
-              <img
-                src={imgSrc}
-                alt="Prof. Fabio Gardioli de Carvalho"
-                onError={() => setImgSrc("/fabio_gardioli.jpg")}
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover object-top"
-              />
+            <div className="w-14 h-14 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0 bg-stone-900 shadow-xs flex items-center justify-center">
+              {!hasImgError ? (
+                <img
+                  src={imgSrc}
+                  alt="Prof. Fabio Gardioli de Carvalho"
+                  onError={() => setHasImgError(true)}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover object-top"
+                />
+              ) : (
+                <span className="text-amber-400 font-bold text-sm font-display">FG</span>
+              )}
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">

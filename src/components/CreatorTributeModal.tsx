@@ -10,9 +10,11 @@ import {
   Sparkles,
   Quote,
   Share2,
-  Check
+  Check,
+  Upload,
+  Camera
 } from "lucide-react";
-import { getCreatorPhoto, subscribeCreatorPhoto } from "../utils/photoManager";
+import { getCreatorPhoto, subscribeCreatorPhoto, uploadCreatorPhoto } from "../utils/photoManager";
 
 interface CreatorTributeModalProps {
   isOpen: boolean;
@@ -27,6 +29,9 @@ export const CreatorTributeModal: React.FC<CreatorTributeModalProps> = ({
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [imgSrc, setImgSrc] = React.useState(() => creatorPhoto || getCreatorPhoto());
+  const [hasImgError, setHasImgError] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+  const [uploadSuccess, setUploadSuccess] = React.useState(false);
 
   React.useEffect(() => {
     if (creatorPhoto) {
@@ -34,11 +39,13 @@ export const CreatorTributeModal: React.FC<CreatorTributeModalProps> = ({
     } else {
       setImgSrc(getCreatorPhoto());
     }
+    setHasImgError(false);
   }, [creatorPhoto]);
 
   React.useEffect(() => {
     const unsubscribe = subscribeCreatorPhoto((newUrl) => {
       setImgSrc(newUrl);
+      setHasImgError(false);
     });
     return unsubscribe;
   }, []);
@@ -97,15 +104,26 @@ export const CreatorTributeModal: React.FC<CreatorTributeModalProps> = ({
 
           {/* Profile Header in Banner */}
           <div className="mt-4 flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 text-center sm:text-left relative z-10">
-            <div className="relative shrink-0">
-              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-xl bg-stone-800">
-                <img
-                  src={imgSrc}
-                  alt="Prof. Fabio Gardioli de Carvalho"
-                  onError={() => setImgSrc("/fabio_gardioli.jpg")}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover object-top"
-                />
+            <div className="relative shrink-0 flex flex-col items-center">
+              <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-xl bg-gradient-to-br from-stone-900 via-stone-850 to-emerald-950 flex items-center justify-center relative">
+                {!hasImgError ? (
+                  <img
+                    src={imgSrc}
+                    alt="Prof. Fabio Gardioli de Carvalho"
+                    onError={() => setHasImgError(true)}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-cover object-top"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center text-center p-2">
+                    <span className="text-2xl sm:text-3xl font-black text-amber-300 font-display tracking-wide">
+                      FG
+                    </span>
+                    <span className="text-[9px] text-amber-100/70 font-semibold uppercase tracking-wider mt-0.5">
+                      Prof. Fabio
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="absolute -bottom-2 -right-2 bg-amber-500 text-stone-950 rounded-full p-1 shadow-md" title="Criador da Logo e Plataforma">
                 <Sparkles className="w-4 h-4 fill-current" />
@@ -122,6 +140,41 @@ export const CreatorTributeModal: React.FC<CreatorTributeModalProps> = ({
               <p className="text-stone-300 text-xs mt-1.5 leading-relaxed font-light max-w-lg">
                 Criação da logo da biblioteca e desta plataforma de acessibilidade para facilitar de forma inclusiva a vida de todos que amam a leitura e que se interessam por este caminho que aproxima a todos de forma especial.
               </p>
+
+              {/* Direct Official Photo Upload */}
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-stone-950 font-bold text-xs rounded-xl shadow-md transition-all active:scale-95">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploading ? "Gravando foto..." : "Carregar Foto Oficial (fabio.jpg)"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setIsUploading(true);
+                        try {
+                          const newUrl = await uploadCreatorPhoto(file);
+                          setImgSrc(newUrl);
+                          setHasImgError(false);
+                          setUploadSuccess(true);
+                          setTimeout(() => setUploadSuccess(false), 5000);
+                        } finally {
+                          setIsUploading(false);
+                        }
+                      }
+                    }}
+                  />
+                </label>
+
+                {uploadSuccess && (
+                  <span className="inline-flex items-center gap-1 text-emerald-300 text-xs font-semibold bg-emerald-950/80 px-2.5 py-1 rounded-lg border border-emerald-400/40 animate-in fade-in">
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    Foto oficial fabio.jpg salva com sucesso!
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

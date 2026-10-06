@@ -21,9 +21,10 @@ import {
   Library,
   BookMarked,
   Heart,
-  Volume2
+  Volume2,
+  Upload
 } from "lucide-react";
-import { getCreatorPhoto, subscribeCreatorPhoto } from "./utils/photoManager";
+import { getCreatorPhoto, subscribeCreatorPhoto, uploadCreatorPhoto } from "./utils/photoManager";
 
 export default function App() {
   const [catalogState, setCatalogState] = useState<CatalogState>({
@@ -57,10 +58,12 @@ export default function App() {
 
   // Creator Photo
   const [creatorPhoto, setCreatorPhoto] = useState<string>(() => getCreatorPhoto());
+  const [hasCreatorPhotoError, setHasCreatorPhotoError] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeCreatorPhoto((newUrl) => {
       setCreatorPhoto(newUrl);
+      setHasCreatorPhotoError(false);
     });
     return unsubscribe;
   }, []);
@@ -554,19 +557,22 @@ export default function App() {
           <div className="mt-8 pt-6 border-t border-stone-800 bg-stone-950/80 rounded-2xl p-5 sm:p-6 border border-amber-500/20 flex flex-col md:flex-row items-center justify-between gap-5 shadow-inner">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
               <div className="shrink-0">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-lg bg-stone-900 ring-2 ring-amber-400/20">
-                  <img
-                    src={creatorPhoto}
-                    alt="Prof. Fabio Gardioli de Carvalho"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (!target.src.endsWith("/fabio_gardioli.jpg")) {
-                        target.src = "/fabio_gardioli.jpg";
-                      }
-                    }}
-                    className="w-full h-full object-cover object-top"
-                  />
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-amber-400 shadow-lg bg-stone-900 ring-2 ring-amber-400/20 flex items-center justify-center">
+                  {!hasCreatorPhotoError ? (
+                    <img
+                      src={creatorPhoto}
+                      alt="Prof. Fabio Gardioli de Carvalho"
+                      referrerPolicy="no-referrer"
+                      onError={() => setHasCreatorPhotoError(true)}
+                      className="w-full h-full object-cover object-top"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-center">
+                      <span className="text-xl sm:text-2xl font-black text-amber-300 font-display">
+                        FG
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -591,12 +597,37 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              onClick={() => setIsCreatorTributeOpen(true)}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-stone-950 transition-colors cursor-pointer shrink-0 shadow-md flex items-center gap-1.5"
-            >
-              <span>Criador da Logo & Plataforma</span>
-            </button>
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
+              <label className="cursor-pointer px-3.5 py-2.5 rounded-xl text-xs font-bold bg-amber-400 hover:bg-amber-300 active:bg-amber-500 text-stone-950 transition-colors shadow-md flex items-center gap-1.5 active:scale-95">
+                <Upload className="w-3.5 h-3.5" />
+                <span>Carregar Foto Oficial (fabio.jpg)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        await uploadCreatorPhoto(file);
+                        setToastMessage("Foto oficial salva e aplicada no site com sucesso!");
+                        setTimeout(() => setToastMessage(null), 5000);
+                      } catch {
+                        setToastMessage("Erro ao carregar a foto.");
+                        setTimeout(() => setToastMessage(null), 3000);
+                      }
+                    }
+                  }}
+                />
+              </label>
+
+              <button
+                onClick={() => setIsCreatorTributeOpen(true)}
+                className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-stone-800 hover:bg-stone-700 active:bg-stone-900 text-amber-300 border border-amber-400/40 transition-colors cursor-pointer shadow-md flex items-center gap-1.5"
+              >
+                <span>Perfil do Criador</span>
+              </button>
+            </div>
           </div>
 
           {/* Bottom copyright */}
